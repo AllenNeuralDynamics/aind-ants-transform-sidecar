@@ -1,0 +1,23 @@
+# Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
+_commit: 0.1.2
+_src_path: aind-python-copier-template
+author_email: galen@galenlynch.com
+author_fullname: Galen Lynch
+current_year: '2025'
+github_org: AllenNeuralDynamics
+github_url: https://github.com/AllenNeuralDynamics/aind-ants-transform-sidecar
+include_cli: true
+include_docs: true
+include_notebooks: false
+include_type_hints: true
+institute_name: Allen Institute for Neural Dynamics
+license: MIT
+project_description: Metadata for ANTs transform objects
+project_name: AIND ANTs Transform Sidecar
+project_slug: aind-ants-transform-sidecar
+publish_to_pypi: false
+python_package_import_name: aind_ants_transform_sidecar
+python_version: '3.10'
+target_python_version: '3.13'
+workflow_source: AllenNeuralDynamics/galen-uv-workflows
+workflow_version: v2

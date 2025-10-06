@@ -1,0 +1,122 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aind-ants-transform-sidecar"
+description = "Metadata for ANTs transform objects"
+license = "MIT"
+requires-python = ">=3.10"
+authors = [
+  { name = "Allen Institute for Neural Dynamics" },
+  { name = "Galen Lynch", email = "galen@galenlynch.com" },
+]
+classifiers = ["Programming Language :: Python :: 3"]
+readme = "README.md"
+version = "0.1.0"
+
+dependencies = ["pydantic>=2,<3"]
+
+[project.urls]
+Repository = "https://github.com/AllenNeuralDynamics/aind-ants-transform-sidecar/"
+Issues = "https://github.com/AllenNeuralDynamics/aind-ants-transform-sidecar/issues"
+Changelog = "https://github.com/AllenNeuralDynamics/aind-ants-transform-sidecar/blob/main/CHANGELOG.md"
+
+[project.scripts]
+# Add your CLI scripts here, e.g.:
+# my_command = "aind_ants_transform_sidecar.scripts.my_command:main"
+
+
+[dependency-groups]
+types = ["mypy"]
+dev = [
+  { include-group = "types" },
+  "codespell",
+  "pytest",
+  "pytest-cov",
+  "ruff",
+  "interrogate",
+]
+jupyter = [{ include-group = "dev" }, "ipykernel", "pip"]
+docs = [
+  { include-group = "dev" },
+  "sphinx>=5.0",
+  "sphinx-autodoc-typehints",
+  "sphinx-copybutton",
+  "myst-parser",
+  "furo",
+]
+
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"aind_ants_transform_sidecar" = ["py.typed"]
+
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+extend-select = ["Q", "RUF100", "C90", "I", "F", "E", "W", "UP", "ANN", "PYI"]
+extend-ignore = ["ANN401"]                                                     # Skip self/cls type annotations
+# Skip all type annotation checks in tests
+per-file-ignores = { "tests/*.py" = ["ANN"] }
+
+mccabe = { max-complexity = 14 }
+pydocstyle = { convention = "numpy" }
+
+[tool.codespell]
+skip = ".git,*.pdf,*.svg,./bonsai,*.bonsai,./docs/_build,uv.lock"
+ignore-words-list = "nd"
+
+[tool.pytest.ini_options]
+addopts = "--strict-markers --tb=short --cov=src --cov-report=term-missing --cov-fail-under=0"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+[tool.interrogate]
+ignore-init-method = true
+ignore-magic = true
+ignore_module = true
+fail-under = 30
+exclude = [
+  "__init__.py",
+  "tests",
+  "docs",
+  "build",
+  "setup.py",
+  "examples",
+  "site",
+]
+
+[tool.commitizen]
+version_provider = "pep621"
+version_files = ["src/aind_ants_transform_sidecar/__init__.py:__version__"]
+update_changelog_on_bump = true
+tag_format = "v$version"
+major_version_zero = true
+[tool.mypy]
+files = ["src/aind_ants_transform_sidecar"]
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+show_error_codes = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
