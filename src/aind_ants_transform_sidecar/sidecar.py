@@ -18,6 +18,19 @@ HASH_METHOD = f"LPS_bbox_spacing_shape:intQ{HASH_DIGITS_DEFAULT}:BE"
 
 
 class BBox(BaseModel):
+    """
+    Bounding box in LPS coordinates.
+
+    Attributes
+    ----------
+    L : tuple[float, float]
+        Left-Right axis bounds (min, max) in mm
+    P : tuple[float, float]
+        Posterior-Anterior axis bounds (min, max) in mm
+    S : tuple[float, float]
+        Superior-Inferior axis bounds (min, max) in mm
+    """
+
     L: tuple[float, float]
     P: tuple[float, float]
     S: tuple[float, float]
@@ -34,6 +47,17 @@ class BBox(BaseModel):
 
 
 class ContentSignature(BaseModel):
+    """
+    Cryptographic signature for spatial domain.
+
+    Attributes
+    ----------
+    method : str
+        Hash method identifier
+    blake2b : str
+        BLAKE2b hash digest (hex string with 'b2:' prefix)
+    """
+
     method: str  # e.g., "canonical_LPS_bbox_spacing_shape"
     blake2b: str
 
@@ -119,12 +143,40 @@ class Domain(BaseModel):
 
 # ---- Rendered chain & steps (common result type) ----
 class StepAffine(BaseModel):
+    """
+    Affine transformation step.
+
+    Attributes
+    ----------
+    kind : Literal["affine"]
+        Step type discriminator
+    file : str
+        Path to affine transform file (.mat)
+    invert : bool
+        Whether to invert the transform (default: False)
+    """
+
     kind: Literal["affine"] = "affine"
     file: str
     invert: bool = False
 
 
 class StepField(BaseModel):
+    """
+    Displacement field transformation step.
+
+    Attributes
+    ----------
+    kind : Literal["displacement_field"]
+        Step type discriminator
+    file : str
+        Path to displacement field file (.nii.gz)
+    role : Literal["forward", "inverse"]
+        Direction of the displacement field
+    grid : Literal["fixed"]
+        Grid on which field is defined (always "fixed" for ANTs SyN)
+    """
+
     kind: Literal["displacement_field"] = "displacement_field"
     file: str
     role: Literal["forward", "inverse"]
@@ -141,10 +193,31 @@ Step: TypeAlias = Annotated[StepAffine | StepField, Field(discriminator="kind")]
 
 
 class Chain(BaseModel):
+    """
+    Ordered sequence of transformation steps.
+
+    Attributes
+    ----------
+    order : Literal["top_to_bottom"]
+        Application order (always "top_to_bottom")
+    steps : list[Step]
+        List of transformation steps (affine or displacement field)
+    """
+
     order: Literal["top_to_bottom"] = "top_to_bottom"
     steps: list[Step]
 
     def antspy_apply_transforms_args(self) -> tuple[list[str], list[bool]]:
+        """
+        Convert chain to ANTsPy apply_transforms arguments.
+
+        Returns
+        -------
+        transforms : list[str]
+            List of transform file paths
+        whichtoinvert : list[bool]
+            List of inversion flags for each transform
+        """
         transforms: list[str] = []
         whichtoinvert: list[bool] = []
         for s in self.steps:
@@ -159,6 +232,21 @@ class Chain(BaseModel):
 
 # ---- Operation variants (discriminated union on 'kind') ----
 class SynTriplet(BaseModel):
+    """
+    ANTs SyN registration output (affine + forward/inverse warps).
+
+    Attributes
+    ----------
+    kind : Literal["syn"]
+        Operation type discriminator
+    affine : str
+        Path to affine transform file (e.g., 0GenericAffine.mat)
+    warp : str
+        Path to forward warp field (e.g., 1Warp.nii.gz)
+    inverse_warp : str
+        Path to inverse warp field (e.g., 1InverseWarp.nii.gz)
+    """
+
     kind: Literal["syn"] = "syn"
     affine: str  # e.g., 0GenericAffine.mat
     warp: str  # e.g., 1Warp.nii.gz
@@ -171,14 +259,30 @@ class SynTriplet(BaseModel):
         return self
 
     def forward_chain(self) -> Chain:
-        steps = [
+        """
+        Generate forward transformation chain (moving → fixed).
+
+        Returns
+        -------
+        Chain
+            Chain with warp field followed by affine transform
+        """
+        steps: list[StepAffine | StepField] = [
             StepField(file=self.warp, role="forward", grid="fixed"),
             StepAffine(file=self.affine, invert=False),
         ]
         return Chain(steps=steps)
 
     def inverse_chain(self) -> Chain:
-        steps = [
+        """
+        Generate inverse transformation chain (fixed → moving).
+
+        Returns
+        -------
+        Chain
+            Chain with inverted affine followed by inverse warp field
+        """
+        steps: list[StepAffine | StepField] = [
             StepAffine(file=self.affine, invert=True),
             StepField(file=self.inverse_warp, role="inverse", grid="fixed"),
         ]
@@ -221,6 +325,24 @@ InternalModel: TypeAlias = TransformSidecarV1  # type alias for today
 
 # --- Facade API: callers depend on these, not on V1 directly ---
 def load_package(src: str | dict) -> InternalModel:
+    """
+    Load transform sidecar from JSON or dict.
+
+    Parameters
+    ----------
+    src : str | dict
+        JSON string or dictionary containing sidecar data
+
+    Returns
+    -------
+    InternalModel
+        Loaded transform sidecar model
+
+    Raises
+    ------
+    ValueError
+        If schema_version is missing or unsupported
+    """
     data = json.loads(src) if isinstance(src, str) else src
     ver = data.get("schema_version")
     if ver is None:
@@ -232,5 +354,18 @@ def load_package(src: str | dict) -> InternalModel:
 
 
 def dump_package(model: InternalModel) -> str:
+    """
+    Serialize transform sidecar to JSON string.
+
+    Parameters
+    ----------
+    model : InternalModel
+        Transform sidecar model to serialize
+
+    Returns
+    -------
+    str
+        JSON string representation (with None fields excluded)
+    """
     # Today: V1 emits V1. Future: Internal → V2Envelope.from_internal(...).model_dump_json(...)
     return model.model_dump_json(by_alias=True, exclude_none=True)
