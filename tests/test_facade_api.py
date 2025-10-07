@@ -40,13 +40,13 @@ def full_sidecar_dict() -> dict:
         "units": "mm",
         "fixed_domain": {
             "definition": "voxel-center",
-            "spacing": [1.0, 1.0, 1.0],
+            "spacing_LPS": [1.0, 1.0, 1.0],
             "bbox": {"L": [-50.0, 50.0], "P": [-60.0, 40.0], "S": [-30.0, 70.0]},
             "shape_canonical": [100, 100, 100],
         },
         "moving_domain": {
             "definition": "voxel-center",
-            "spacing": [1.0, 1.0, 1.0],
+            "spacing_LPS": [1.0, 1.0, 1.0],
             "bbox": {"L": [-60.0, 60.0], "P": [-70.0, 50.0], "S": [-40.0, 80.0]},
             "shape_canonical": [120, 120, 120],
         },
@@ -86,8 +86,8 @@ class TestLoadPackage:
         assert isinstance(model, TransformSidecarV1)
         assert model.fixed_domain is not None
         assert model.moving_domain is not None
-        assert model.fixed_domain.spacing == (1.0, 1.0, 1.0)
-        assert model.moving_domain.spacing == (1.0, 1.0, 1.0)
+        assert model.fixed_domain.spacing_LPS == (1.0, 1.0, 1.0)
+        assert model.moving_domain.spacing_LPS == (1.0, 1.0, 1.0)
 
     def test_load_rejects_missing_schema_version(self) -> None:
         """Test that load_package rejects data missing schema_version."""
@@ -157,7 +157,7 @@ class TestLoadPackage:
             "frame": "LPS",
             "units": "mm",
             "fixed_domain": {
-                "spacing": [0.0, 1.0, 1.0],  # Invalid: zero spacing
+                "spacing_LPS": [0.0, 1.0, 1.0],  # Invalid: zero spacing_LPS
                 "bbox": {"L": [-50.0, 50.0], "P": [-60.0, 40.0], "S": [-30.0, 70.0]},
             },
             "transform": {
@@ -174,14 +174,14 @@ class TestLoadPackage:
         """Test loading sidecar with spatial signatures."""
         # First create a domain to get the signature
         bbox = BBox(L=(-50.0, 50.0), P=(-60.0, 40.0), S=(-30.0, 70.0))
-        domain = Domain(spacing=(1.0, 1.0, 1.0), bbox=bbox)
+        domain = Domain(spacing_LPS=(1.0, 1.0, 1.0), bbox=bbox)
 
         data = {
             "schema_version": "1.0",
             "frame": "LPS",
             "units": "mm",
             "fixed_domain": {
-                "spacing": [1.0, 1.0, 1.0],
+                "spacing_LPS": [1.0, 1.0, 1.0],
                 "bbox": {"L": [-50.0, 50.0], "P": [-60.0, 40.0], "S": [-30.0, 70.0]},
                 "spatial_signature": {
                     "method": domain.spatial_signature.method,
@@ -189,7 +189,7 @@ class TestLoadPackage:
                 },
             },
             "moving_domain": {
-                "spacing": [1.0, 1.0, 1.0],
+                "spacing_LPS": [1.0, 1.0, 1.0],
                 "bbox": {"L": [-50.0, 50.0], "P": [-60.0, 40.0], "S": [-30.0, 70.0]},
             },
             "transform": {
@@ -233,8 +233,8 @@ class TestDumpPackage:
         triplet = SynTriplet(affine="0GenericAffine.mat", warp="1Warp.nii.gz", inverse_warp="1InverseWarp.nii.gz")
         fixed_bbox = BBox(L=(-50.0, 50.0), P=(-60.0, 40.0), S=(-30.0, 70.0))
         moving_bbox = BBox(L=(-60.0, 60.0), P=(-70.0, 50.0), S=(-40.0, 80.0))
-        fixed_domain = Domain(spacing=(1.0, 1.0, 1.0), bbox=fixed_bbox)
-        moving_domain = Domain(spacing=(1.0, 1.0, 1.0), bbox=moving_bbox)
+        fixed_domain = Domain(spacing_LPS=(1.0, 1.0, 1.0), bbox=fixed_bbox)
+        moving_domain = Domain(spacing_LPS=(1.0, 1.0, 1.0), bbox=moving_bbox)
 
         sidecar = TransformSidecarV1(transform=triplet, fixed_domain=fixed_domain, moving_domain=moving_domain)
         json_str = dump_package(sidecar)
@@ -242,14 +242,14 @@ class TestDumpPackage:
         data = json.loads(json_str)
         assert "fixed_domain" in data
         assert "moving_domain" in data
-        assert data["fixed_domain"]["spacing"] == [1.0, 1.0, 1.0]
+        assert data["fixed_domain"]["spacing_LPS"] == [1.0, 1.0, 1.0]
 
     def test_dump_includes_spatial_signatures(self) -> None:
         """Test that dump_package includes spatial signatures."""
         triplet = SynTriplet(affine="0GenericAffine.mat", warp="1Warp.nii.gz", inverse_warp="1InverseWarp.nii.gz")
         fixed_bbox = BBox(L=(-50.0, 50.0), P=(-60.0, 40.0), S=(-30.0, 70.0))
-        fixed_domain = Domain(spacing=(1.0, 1.0, 1.0), bbox=fixed_bbox)
-        moving_domain = Domain(spacing=(1.0, 1.0, 1.0), bbox=fixed_bbox)
+        fixed_domain = Domain(spacing_LPS=(1.0, 1.0, 1.0), bbox=fixed_bbox)
+        moving_domain = Domain(spacing_LPS=(1.0, 1.0, 1.0), bbox=fixed_bbox)
 
         sidecar = TransformSidecarV1(transform=triplet, fixed_domain=fixed_domain, moving_domain=moving_domain)
         json_str = dump_package(sidecar)
@@ -287,8 +287,8 @@ class TestRoundtrip:
         assert model1.fixed_domain is not None
         assert model1.moving_domain is not None
 
-        assert model2.fixed_domain.spacing == model1.fixed_domain.spacing
-        assert model2.moving_domain.spacing == model1.moving_domain.spacing
+        assert model2.fixed_domain.spacing_LPS == model1.fixed_domain.spacing_LPS
+        assert model2.moving_domain.spacing_LPS == model1.moving_domain.spacing_LPS
         assert model2.fixed_domain.spatial_signature == model1.fixed_domain.spatial_signature
         assert model2.moving_domain.spatial_signature == model1.moving_domain.spatial_signature
 

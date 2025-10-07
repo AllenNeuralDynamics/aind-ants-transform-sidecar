@@ -15,7 +15,7 @@ def valid_bbox() -> BBox:
 @pytest.fixture
 def valid_domain(valid_bbox: BBox) -> Domain:
     """Fixture providing a valid Domain."""
-    return Domain(spacing=(1.0, 1.0, 1.0), bbox=valid_bbox, shape_canonical=(100, 100, 100))
+    return Domain(spacing_LPS=(1.0, 1.0, 1.0), bbox=valid_bbox, shape_canonical=(100, 100, 100))
 
 
 @pytest.fixture
@@ -42,8 +42,8 @@ class TestTransformSidecarV1Validation:
         # Create two different domains for fixed and moving
         fixed_bbox = BBox(L=(-50.0, 50.0), P=(-60.0, 40.0), S=(-30.0, 70.0))
         moving_bbox = BBox(L=(-60.0, 60.0), P=(-70.0, 50.0), S=(-40.0, 80.0))
-        fixed_domain = Domain(spacing=(1.0, 1.0, 1.0), bbox=fixed_bbox)
-        moving_domain = Domain(spacing=(1.0, 1.0, 1.0), bbox=moving_bbox)
+        fixed_domain = Domain(spacing_LPS=(1.0, 1.0, 1.0), bbox=fixed_bbox)
+        moving_domain = Domain(spacing_LPS=(1.0, 1.0, 1.0), bbox=moving_bbox)
 
         sidecar = TransformSidecarV1(
             transform=valid_syn_triplet, fixed_domain=fixed_domain, moving_domain=moving_domain
@@ -150,8 +150,8 @@ class TestTransformSidecarV1Serialization:
         """Test serialization of full sidecar with domains."""
         fixed_bbox = BBox(L=(-50.0, 50.0), P=(-60.0, 40.0), S=(-30.0, 70.0))
         moving_bbox = BBox(L=(-60.0, 60.0), P=(-70.0, 50.0), S=(-40.0, 80.0))
-        fixed_domain = Domain(spacing=(1.0, 1.0, 1.0), bbox=fixed_bbox)
-        moving_domain = Domain(spacing=(1.0, 1.0, 1.0), bbox=moving_bbox)
+        fixed_domain = Domain(spacing_LPS=(1.0, 1.0, 1.0), bbox=fixed_bbox)
+        moving_domain = Domain(spacing_LPS=(1.0, 1.0, 1.0), bbox=moving_bbox)
 
         sidecar = TransformSidecarV1(
             transform=valid_syn_triplet, fixed_domain=fixed_domain, moving_domain=moving_domain
@@ -161,8 +161,8 @@ class TestTransformSidecarV1Serialization:
         assert "fixed_domain" in json_data
         assert "moving_domain" in json_data
         # Pydantic serializes tuples as tuples, not lists
-        assert json_data["fixed_domain"]["spacing"] == (1.0, 1.0, 1.0)
-        assert json_data["moving_domain"]["spacing"] == (1.0, 1.0, 1.0)
+        assert json_data["fixed_domain"]["spacing_LPS"] == (1.0, 1.0, 1.0)
+        assert json_data["moving_domain"]["spacing_LPS"] == (1.0, 1.0, 1.0)
 
     def test_sidecar_roundtrip_minimal(self, valid_syn_triplet: SynTriplet) -> None:
         """Test roundtrip serialization of minimal sidecar."""
@@ -181,8 +181,8 @@ class TestTransformSidecarV1Serialization:
         """Test roundtrip serialization of full sidecar with domains."""
         fixed_bbox = BBox(L=(-50.0, 50.0), P=(-60.0, 40.0), S=(-30.0, 70.0))
         moving_bbox = BBox(L=(-60.0, 60.0), P=(-70.0, 50.0), S=(-40.0, 80.0))
-        fixed_domain = Domain(spacing=(1.0, 1.0, 1.0), bbox=fixed_bbox)
-        moving_domain = Domain(spacing=(1.0, 1.0, 1.0), bbox=moving_bbox)
+        fixed_domain = Domain(spacing_LPS=(1.0, 1.0, 1.0), bbox=fixed_bbox)
+        moving_domain = Domain(spacing_LPS=(1.0, 1.0, 1.0), bbox=moving_bbox)
 
         sidecar = TransformSidecarV1(
             transform=valid_syn_triplet, fixed_domain=fixed_domain, moving_domain=moving_domain
@@ -192,8 +192,8 @@ class TestTransformSidecarV1Serialization:
 
         assert sidecar2.fixed_domain is not None
         assert sidecar2.moving_domain is not None
-        assert sidecar2.fixed_domain.spacing == fixed_domain.spacing
-        assert sidecar2.moving_domain.spacing == moving_domain.spacing
+        assert sidecar2.fixed_domain.spacing_LPS == fixed_domain.spacing_LPS
+        assert sidecar2.moving_domain.spacing_LPS == moving_domain.spacing_LPS
         assert sidecar2.fixed_domain.spatial_signature == fixed_domain.spatial_signature
         assert sidecar2.moving_domain.spatial_signature == moving_domain.spatial_signature
 

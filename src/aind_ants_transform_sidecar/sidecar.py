@@ -66,14 +66,16 @@ class Domain(BaseModel):
     """
     Layout-invariant domain definition in LPS:
       - 'definition' clarifies that bbox is voxel-center coordinates
-      - 'spacing' is canonical spacing per axis (>=0)
+      - 'spacing_LPS' is canonical spacing per axis (>=0)
       - 'shape_canonical' is voxel counts (optional but recommended)
       - 'bbox' is center-to-center bounds along L,P,S
       - 'spatial_signature' helps ensure makes it easy to compare domains
+
+    Note: Only valid for axis-aligned domains (no rotation/skew).
     """
 
     definition: Literal["voxel-center"] = "voxel-center"
-    spacing: tuple[float, float, float]
+    spacing_LPS: tuple[float, float, float]
     bbox: BBox
     shape_canonical: tuple[int, int, int] | None = None
     spatial_signature: ContentSignature | None = None
@@ -95,7 +97,7 @@ class Domain(BaseModel):
             return int(round(x * scale))
 
         parts: list[int] = []
-        parts += [q(s) for s in self.spacing]
+        parts += [q(s) for s in self.spacing_LPS]
         parts += [q(v) for axis in ("L", "P", "S") for v in getattr(self.bbox, axis)]
         if self.shape_canonical is not None:
             parts += list(self.shape_canonical)  # already ints
@@ -118,8 +120,8 @@ class Domain(BaseModel):
     @model_validator(mode="after")
     def _auto_spatial_signature(self) -> Domain:
         # basic sanity for spacing
-        if any(s <= 0 or not math.isfinite(s) for s in self.spacing):
-            raise ValueError("spacing must be positive and finite")
+        if any(s <= 0 or not math.isfinite(s) for s in self.spacing_LPS):
+            raise ValueError("spacing_LPS must be positive and finite")
 
         computed = self._spatial_hash()  # uses defaults above
         if self.spatial_signature is None:

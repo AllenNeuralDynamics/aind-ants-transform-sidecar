@@ -100,6 +100,7 @@ version_files = ["src/aind_ants_transform_sidecar/__init__.py:__version__"]
 update_changelog_on_bump = true
 tag_format = "v$version"
 major_version_zero = true
+
 [tool.mypy]
 files = ["src/aind_ants_transform_sidecar"]
 warn_return_any = true
